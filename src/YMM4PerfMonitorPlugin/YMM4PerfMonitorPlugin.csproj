@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../buildprops/YMM4Plugin.Build.props" />
+  <PropertyGroup>
+    <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AssemblyName>YMM4PerfMonitorPlugin</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="$(YMM4_PATH)\YukkuriMovieMaker.Controls.dll">
+      <Private>false</Private>
+      <CopyLocal>false</CopyLocal>
+    </Reference>
+    <Reference Include="$(YMM4_PATH)\YukkuriMovieMaker.Plugin.dll">
+      <Private>false</Private>
+      <CopyLocal>false</CopyLocal>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Epoxy.Wpf" Version="1.16.0" />
+  </ItemGroup>
+</Project>
