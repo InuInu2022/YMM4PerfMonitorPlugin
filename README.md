@@ -1,51 +1,42 @@
-# ymme-vscode-boilerplate
+# 🟦 YMM4パフォーマンスモニタープラグイン
 
-YMM4 plugin boilerplate template repository
+![GitHub License](https://img.shields.io/github/license/InuInu2022/YMM4PerfMonitorPlugin) <img src="https://img.shields.io/badge/.NET-9.0+-4FC08D.svg?logo=dotnet&style=popout">
 
-- githubのtemplate repositoryで使えるリポジトリです。
- 	- [テンプレートリポジトリを作成する - GitHub Docs](https://docs.github.com/ja/repositories/creating-and-managing-repositories/creating-a-template-repository)
-- VSCode用ですが、タスクやデバッガの設定以外はVSやRiderなどでも使えます
+YMM4パフォーマンスモニタープラグインは、[YukkuriMovieMaker4](https://manjubox.net/ymm4/)用のパフォーマンス監視プラグインです。プロジェクトのレンダリングやプレビュー時のCPU・メモリ使用率などの情報を表示し、パフォーマンスのボトルネックを特定するのに役立ちます。
 
-## このテンプレートでできること
+## 特長
 
-### 設定済み
+- YMM4のタイムライン再生・レンダリング時のシステムリソース使用状況をリアルタイム表示
+- CPU、メモリ、ディスクI/Oなどの主要な指標を可視化
+- シンプルなUIで直感的に利用可能
 
-- `src/Sample`以下に何もしないサンプルプラグインが設定済みです
-  - これをもとにしても、公式のサンプルを元にしてもOK
-  - ソリューションファイル：`Sample.sln`も設定済みです
-- `dotnet publish`コマンドでymmeファイルを`publish`以下に作成＆YMM4のプラグインフォルダ以下に展開できます
-- Code Analyzerを色々有効にしています
-- ビルド時に `LICENSE` や `README.md` がdllやymmeに含まれるように設定済
-- `licenses`フォルダ以下のファイルもdllやymmeに含まれるように
-- [MinVer](https://github.com/adamralph/minver)ライブラリでgitのタグから自動でSemVerが付きます
-  - 出力されるymmeファイル名にバージョン番号を含むようになりました `YourPluginName.v.0.x.x.ymme`
-  - 展開すると内部にバージョン番号を含まない`YourPluginName`ができるためバージョンアップ時も問題ありません
-- VSCode: VSCodeの`publish`タスクでも上記ができるようにしています
-- VSCode: プラグインをYMM4ごとデバッガ接続で起動することができます
-- gitignore, editorconfig設定済み
+## インストール方法
 
-### 設定が必要なこと
+1. 本リポジトリの[Releases](./releases)から最新の`YMM4PerfMonitorPlugin.v*.*.*.ymme`をダウンロード
+2. ダウンロードしたymmeをダブルクリックしてインストール
+3. YMM4を再起動
 
-- **環境変数：`YMM4_PATH`に「開発用YMM4」の置いてあるフォルダへのパスを通してください**
-  - ※普段使い用YMM4とは別にするのをオススメ
-- `LICENSE`：MITライセンスになっているのでお好きなライセンスに書き換えて下さい
-- nuget以外のライブラリ：`lib`以下において参照してください
-- ドキュメント: `docs`フォルダを用意しています
-- ユニットテスト: `tests`フォルダだけ用意しています
-  - お好きなテストフレームワークをお使いください
+## 使い方
 
-### バージョン
+1. YMM4を起動し、メニューから「ツール」→「YMM4 パフォーマンスモニター」を選択
+2. プラグインウィンドウで各種リソース情報を確認
 
-- YMM v4.35.xx 以降
-- ※YMM v4.34.xx 以前は [tags](https://github.com/InuInu2022/ymme-vscode-boilerplate/releases/tag/v4.34) から旧バージョンを利用することができます
+## 動作環境
 
-## Reference
+- YukkuriMovieMaker4 v4.44.0以降
+- Windows 10/11
+- .NET 9.0以上
 
-YMM4のプラグイン開発は以下を参照してください。
+## ライセンス
 
-- [プラグインを作成する | 饅頭遣いのおもちゃ箱](https://manjubox.net/ymm4/faq/plugin/how_to_make/)
-- [manju-summoner/YukkuriMovieMaker4PluginSamples: YMM4用プラグインのサンプル集です](https://github.com/manju-summoner/YukkuriMovieMaker4PluginSamples)
-- [manju-summoner/YukkuriMovieMaker.Plugin.Community: YMM4コミュニティで開発するYMM4プラグインです。 プラグインのサンプルも兼ねています。 ここで開発されたプラグインはYMM4にデフォルトで組み込まれます。](https://github.com/manju-summoner/YukkuriMovieMaker.Plugin.Community)
-- [manju-summoner/SampleReversePlaybackAudioEffectPlugin: キャッシュ機構を備えたYMM4音声エフェクトの実装サンプルです。音声の逆再生機能を提供します。ただし、仮実装のため実用には適しません。](https://github.com/manju-summoner/SampleReversePlaybackAudioEffectPlugin)
-- [manju-summoner/YukkuriMovieMaker.Generator](https://github.com/manju-summoner/YukkuriMovieMaker.Generator)
-- [YMM4 API Documentation](https://ymm-api.pages.dev/#ymm4)
+このプラグインはMITライセンスで公開されています。詳細は[LICENSE](./LICENSE)をご覧ください。
+
+## 貢献
+
+バグ報告・機能要望・プルリクエスト歓迎です。IssueまたはPull Requestからご連絡ください。
+
+---
+
+**参考:**
+
+- [YukkuriMovieMaker4公式サイト](https://manjubox.net/ymm4/)

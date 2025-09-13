@@ -28,7 +28,7 @@
             <TextBlock Text="{Binding FPS, StringFormat=FPS: {0:F1}}" />
             <TextBlock Text="{Binding CPU, StringFormat=CPU: {0:F1}%}" />
             <TextBlock Text="{Binding Memory, StringFormat=Memory: {0} MB}" />
-            <TextBlock Text="{Binding GCInfo}" />
+            <TextBlock Text="{Binding GCInfo}" ToolTip="各世代のGC回数" />
             <TextBlock Text="{Binding DispatcherDelay, StringFormat=Dispatcher Delay: {0} ms}" />
             <TextBlock Text="{Binding ThreadCount, StringFormat=Threads: {0}}" />
         </StackPanel>

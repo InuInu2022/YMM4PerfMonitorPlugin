@@ -11,7 +11,7 @@ public class YMM4PerfMonitorPlugin : IToolPlugin
 {
 	public Type ViewModelType => typeof(PerfMonitorViewModel);
 	public Type ViewType => typeof(PerfMonitorView);
-	public string Name => "YMM4 Performance Monitor";
+	public string Name => "YMM4 パフォーマンスモニター";
 
 	public PluginDetailsAttribute Details =>
 		GetType()

@@ -194,12 +194,29 @@ public class PerfMonitorViewModel : IDisposable
 		FPSPoints = points;
 	}
 
+	// 前回値を保持するフィールドを用意
+	private TimeSpan _lastTotalProcessorTime;
+	private DateTime _lastCpuCheckTime;
+
 	double GetCpuUsage()
 	{
-		// 簡易CPU使用率計測
-		return _proc.TotalProcessorTime.TotalMilliseconds / Environment.ProcessorCount
-			/ (Environment.TickCount64 / 1000.0)
-			* 100.0;
+		var now = DateTime.UtcNow;
+		var totalProcTime = _proc.TotalProcessorTime;
+
+		if (_lastCpuCheckTime == default)
+		{
+			_lastCpuCheckTime = now;
+			_lastTotalProcessorTime = totalProcTime;
+			return 0;
+		}
+
+		var cpuUsedMs = (totalProcTime - _lastTotalProcessorTime).TotalMilliseconds;
+		var elapsedMs = (now - _lastCpuCheckTime).TotalMilliseconds;
+		_lastCpuCheckTime = now;
+		_lastTotalProcessorTime = totalProcTime;
+
+		if (elapsedMs <= 0) return 0;
+		return cpuUsedMs / (elapsedMs * Environment.ProcessorCount) * 100.0;
 	}
 
 	void OnPropertyChanged(string? name) =>
