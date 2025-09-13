@@ -21,6 +21,7 @@ public class PerfMonitorViewModel : IDisposable
 	// プロパティ
 	public double FPS { get; private set; }
 	public double CPU { get; private set; }
+	public double TotalCPU { get; private set; }
 	public long Memory { get; private set; }
 	public string GCInfo { get; private set; } = "";
 	public int ThreadCount { get; private set; }
@@ -42,13 +43,12 @@ public class PerfMonitorViewModel : IDisposable
 		get; private set;
 	} = [];
 
-	private readonly List<double> _cpuHistory  = [..Enumerable.Range(0, MaxPoints)];
-	private readonly List<double> _memoryHistory = [..Enumerable.Range(0, MaxPoints)];
+	private readonly List<double> _cpuHistory = [.. Enumerable.Repeat(0.0, MaxPoints)];
+	private readonly List<double> _memoryHistory = [.. Enumerable.Repeat(0.0, MaxPoints)];
 
 
 	// FPS履歴用リスト
-	private readonly List<double> _fpsHistory
-		= [..Enumerable.Range(0, MaxPoints)];
+	private readonly List<double> _fpsHistory = [.. Enumerable.Repeat(0.0, MaxPoints)];
 
 	public Well<UserControl> MainWell =>
 		Well.Factory.Create<UserControl>();
@@ -70,6 +70,10 @@ public class PerfMonitorViewModel : IDisposable
 	private bool _disposedValue;
 
 	private readonly EventHandler _renderingHandler;
+
+	readonly PerformanceCounter? totalCpuCounter;
+
+
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Concurrency", "PH_S030:Async Void Method Invocation", Justification = "<保留中>")]
 	public PerfMonitorViewModel()
@@ -98,8 +102,16 @@ public class PerfMonitorViewModel : IDisposable
 			return default;
 		});
 
-
-
+		try
+		{
+			totalCpuCounter = new PerformanceCounter("Processor", "% Processor Time", "_Total");
+			// 初回値は無効なので一度Readして捨てる
+			_ = totalCpuCounter.NextValue();
+		}
+		catch
+		{
+			totalCpuCounter = null;
+		}
 	}
 
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Correctness", "SS001:Async methods should return a Task to make them awaitable", Justification = "<保留中>")]
@@ -164,6 +176,19 @@ public class PerfMonitorViewModel : IDisposable
 		if (_memoryHistory.Count >= MaxPoints) _memoryHistory.RemoveAt(0);
 		_memoryHistory.Add(Memory);
 
+		if (totalCpuCounter is not null)
+		{
+			try
+			{
+				// 2回目以降のみ有効な値
+				TotalCPU = totalCpuCounter.NextValue();
+			}
+			catch
+			{
+				TotalCPU = 0;
+			}
+		}
+
 		RegenerateFpsPoints();
 		RegenerateCpuPoints();
 		RegenerateMemoryPoints();
@@ -191,17 +216,18 @@ public class PerfMonitorViewModel : IDisposable
 
 		double width = CanvasWidth;
 		double height = CanvasHeight;
-		double maxFps = _fpsHistory.Max() * 1.1;
+		// 下端は過去100回の最大値、ただし60fps未満にはならない
+		double maxFps = Math.Max(_fpsHistory.Max(), 60.0);
 		if (maxFps == 0)
-			maxFps = 1;
+			maxFps = 60.0;
 
 		var points = new PointCollection();
 		int count = _fpsHistory.Count;
 		for (int i = 0; i < count; i++)
 		{
 			double x = (count == 1) ? 0 : i * width / (count - 1);
-			// FPSが低いほどYが大きく（上に）なる
-			double y = height * (1.0 - (_fpsHistory[i] / maxFps));
+			// FPSが0ならy=0（上端）、maxFpsならy=height（下端）になるよう反転
+			double y = height * (_fpsHistory[i] / maxFps);
 			points.Add(new Point(x, y));
 		}
 		FPSPoints = points;

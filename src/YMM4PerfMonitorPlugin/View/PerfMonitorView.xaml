@@ -28,6 +28,7 @@
             >
             <TextBlock Text="{Binding FPS, StringFormat=UI FPS: {0:F1}}" />
             <TextBlock Text="{Binding CPU, StringFormat=CPU: {0:F1}%}" />
+            <TextBlock Text="{Binding TotalCPU, StringFormat=Total CPU: {0:F1}%}" />
             <TextBlock Text="{Binding Memory, StringFormat=Memory: {0} MB}" />
             <TextBlock Text="{Binding GCInfo}" ToolTip="各世代のGC回数" />
             <TextBlock Text="{Binding DispatcherDelay, StringFormat=Dispatcher Delay: {0} ms}" />
