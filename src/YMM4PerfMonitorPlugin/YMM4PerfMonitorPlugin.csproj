@@ -15,6 +15,10 @@
       <Private>false</Private>
       <CopyLocal>false</CopyLocal>
     </Reference>
+    <Reference Include="$(YMM4_PATH)\System.Management.dll">
+      <Private>false</Private>
+      <CopyLocal>false</CopyLocal>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

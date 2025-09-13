@@ -7,9 +7,9 @@
     xmlns:local="clr-namespace:YMM4PerfMonitorPlugin"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:view="clr-namespace:YMM4PerfMonitorPlugin.View"
-    epoxy:Fountain.Well="{Binding MainWell}"
     d:DesignHeight="450"
     d:DesignWidth="800"
+    epoxy:Fountain.Well="{Binding MainWell}"
     mc:Ignorable="d"
     >
     <Grid Margin="8">
@@ -22,10 +22,11 @@
         <!--  数値系  -->
         <StackPanel
             Grid.Column="0"
+            MinWidth="80"
             Margin="0,0,0,8"
             Orientation="Vertical"
             >
-            <TextBlock Text="{Binding FPS, StringFormat=FPS: {0:F1}}" />
+            <TextBlock Text="{Binding FPS, StringFormat=UI FPS: {0:F1}}" />
             <TextBlock Text="{Binding CPU, StringFormat=CPU: {0:F1}%}" />
             <TextBlock Text="{Binding Memory, StringFormat=Memory: {0} MB}" />
             <TextBlock Text="{Binding GCInfo}" ToolTip="各世代のGC回数" />
@@ -36,15 +37,52 @@
         <GridSplitter Grid.Column="1" Width="5" />
 
         <!--  折れ線グラフ  -->
-        <Canvas Grid.Column="2" Background="Black"
-            VerticalAlignment="Stretch"
+        <Canvas
+            Grid.Column="2"
             HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="Black"
             SizeChanged="Canvas_SizeChanged"
-            epoxy:Fountain.Well="{Binding CanvasWell}">
+            >
+            <!--  凡例ラベル  -->
+            <TextBlock
+                Canvas.Left="8"
+                Canvas.Top="8"
+                FontWeight="Bold"
+                Foreground="Lime"
+                Text="UI FPS"
+                />
+            <TextBlock
+                Canvas.Left="8"
+                Canvas.Top="28"
+                FontWeight="Bold"
+                Foreground="Red"
+                Text="CPU"
+                />
+            <TextBlock
+                Canvas.Left="8"
+                Canvas.Top="48"
+                FontWeight="Bold"
+                Foreground="Cyan"
+                Text="Memory"
+                />
+
             <Polyline
                 x:Name="FpsLine"
                 Points="{Binding FPSPoints}"
                 Stroke="Lime"
+                StrokeThickness="1"
+                />
+            <Polyline
+                x:Name="CpuLine"
+                Points="{Binding CpuPoints}"
+                Stroke="Red"
+                StrokeThickness="1"
+                />
+            <Polyline
+                x:Name="MemoryLine"
+                Points="{Binding MemoryPoints}"
+                Stroke="Cyan"
                 StrokeThickness="1"
                 />
         </Canvas>

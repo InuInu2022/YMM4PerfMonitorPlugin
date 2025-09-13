@@ -1,14 +1,17 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Threading;
 using Epoxy;
+using System.Management; // ファイル冒頭に追加
 
 using YMM4PerfMonitorPlugin.View;
 
 using static System.Net.Mime.MediaTypeNames;
+using System.Globalization;
 
 namespace YMM4PerfMonitorPlugin.ViewModel;
 
@@ -23,25 +26,29 @@ public class PerfMonitorViewModel : IDisposable
 	public int ThreadCount { get; private set; }
 	public double DispatcherDelay { get; private set; }
 
-	private PointCollection _fpsPoints = new();
+
 	public PointCollection FPSPoints
 	{
-		get => _fpsPoints;
-		private set
-		{
-			if (_fpsPoints != value)
-			{
-				_fpsPoints = value;
-				OnPropertyChanged(nameof(FPSPoints));
-			}
-		}
-	}
+		get; private set;
+	} = [];
+
+	public PointCollection CpuPoints
+	{
+		get; private set;
+	} = [];
+
+	public PointCollection MemoryPoints
+	{
+		get; private set;
+	} = [];
+
+	private readonly List<double> _cpuHistory  = [..Enumerable.Range(0, MaxPoints)];
+	private readonly List<double> _memoryHistory = [..Enumerable.Range(0, MaxPoints)];
+
 
 	// FPS履歴用リスト
 	private readonly List<double> _fpsHistory
 		= [..Enumerable.Range(0, MaxPoints)];
-
-	public event PropertyChangedEventHandler? PropertyChanged;
 
 	public Well<UserControl> MainWell =>
 		Well.Factory.Create<UserControl>();
@@ -52,9 +59,8 @@ public class PerfMonitorViewModel : IDisposable
 	public double CanvasHeight { get; set; } = 100;
 
 	// FPS計測
-	private DateTime _lastRender = DateTime.UtcNow;
+	private DateTime _lastFpsUpdate = DateTime.UtcNow;
 	private int _frameCount;
-	private double _fpsAccumulator;
 
 	private readonly DispatcherTimer _timer;
 	private readonly Process _proc = Process.GetCurrentProcess();
@@ -71,15 +77,7 @@ public class PerfMonitorViewModel : IDisposable
 		// FPS計測フック
 		_renderingHandler = (sender, e) =>
 		{
-			var now = DateTime.UtcNow;
-			var delta = (now - _lastRender).TotalSeconds;
-			_lastRender = now;
-
-			if (delta > 0)
-			{
-				_fpsAccumulator += 1.0 / delta;
-				_frameCount++;
-			}
+			_frameCount++;
 		};
 		CompositionTarget.Rendering += _renderingHandler;
 
@@ -124,12 +122,19 @@ public class PerfMonitorViewModel : IDisposable
 	[System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "VSTHRD001:Avoid legacy thread switching APIs", Justification = "<保留中>")]
 	private async Task UpdateAsync()
 	{
-		if (_frameCount > 0)
+		// FPS計算: 1秒間のフレーム数
+		var now = DateTime.UtcNow;
+		var elapsed = (now - _lastFpsUpdate).TotalSeconds;
+		if (elapsed > 0)
 		{
-			FPS = _fpsAccumulator / _frameCount;
-			_fpsAccumulator = 0;
-			_frameCount = 0;
+			FPS = _frameCount / elapsed;
 		}
+		else
+		{
+			FPS = 0;
+		}
+		_lastFpsUpdate = now;
+		_frameCount = 0;
 
 		_proc.Refresh();
 
@@ -153,7 +158,15 @@ public class PerfMonitorViewModel : IDisposable
 			_fpsHistory.RemoveAt(0);
 		}
 		_fpsHistory.Add(FPS);
+		if (_cpuHistory.Count >= MaxPoints) _cpuHistory.RemoveAt(0);
+		_cpuHistory.Add(CPU);
+
+		if (_memoryHistory.Count >= MaxPoints) _memoryHistory.RemoveAt(0);
+		_memoryHistory.Add(Memory);
+
 		RegenerateFpsPoints();
+		RegenerateCpuPoints();
+		RegenerateMemoryPoints();
 	}
 
 
@@ -170,7 +183,7 @@ public class PerfMonitorViewModel : IDisposable
 		}
 	}
 
-	// FPSPoints生成処理をメソッド化
+	// FPSグラフ: FPSが低いほどグラフが上に跳ね上がる（高負荷を直感的に表示）
 	void RegenerateFpsPoints()
 	{
 		if (_fpsHistory.Count <= 1)
@@ -186,12 +199,76 @@ public class PerfMonitorViewModel : IDisposable
 		int count = _fpsHistory.Count;
 		for (int i = 0; i < count; i++)
 		{
-			// 点間隔を履歴数で均等割り付け
 			double x = (count == 1) ? 0 : i * width / (count - 1);
-			double y = height - (_fpsHistory[i] / maxFps * height);
+			// FPSが低いほどYが大きく（上に）なる
+			double y = height * (1.0 - (_fpsHistory[i] / maxFps));
 			points.Add(new Point(x, y));
 		}
 		FPSPoints = points;
+	}
+
+	void RegenerateCpuPoints()
+	{
+		if (_cpuHistory.Count <= 1) return;
+		double width = CanvasWidth;
+		double height = CanvasHeight;
+		const double max = 100.0; // 常に100%スケール
+		var points = new PointCollection();
+		int count = _cpuHistory.Count;
+		for (int i = 0; i < count; i++)
+		{
+			double x = (count == 1) ? 0 : i * width / (count - 1);
+			double y = height * (1.0 - (_cpuHistory[i] / max));
+			points.Add(new Point(x, y));
+		}
+		CpuPoints = points;
+	}
+
+	long? totalPhysicalMemoryMB;
+
+	long GetTotalPhysicalMemoryMB()
+	{
+		if (totalPhysicalMemoryMB is not null)
+		{
+			return totalPhysicalMemoryMB.Value;
+		}
+		try
+		{
+			using var searcher = new ManagementObjectSearcher("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
+			foreach (var obj in searcher.Get())
+			{
+				if (obj["TotalPhysicalMemory"] is string memStr && long.TryParse(memStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var bytes))
+				{
+					totalPhysicalMemoryMB = (long)Math.Round((double)bytes / (1024 * 1024));
+					return totalPhysicalMemoryMB.Value;
+				}
+			}
+		}
+		catch
+		{
+			// ignore and fallback
+			totalPhysicalMemoryMB = 4096; // 取得失敗時は4GB
+		}
+		totalPhysicalMemoryMB = 4096; // 取得失敗時は4GB
+		return totalPhysicalMemoryMB.Value;
+	}
+
+	void RegenerateMemoryPoints()
+	{
+		if (_memoryHistory.Count <= 1) return;
+		double width = CanvasWidth;
+		double height = CanvasHeight;
+		double max = GetTotalPhysicalMemoryMB();
+		if (max == 0) max = 1;
+		var points = new PointCollection();
+		int count = _memoryHistory.Count;
+		for (int i = 0; i < count; i++)
+		{
+			double x = (count == 1) ? 0 : i * width / (count - 1);
+			double y = height * (1.0 - (_memoryHistory[i] / max));
+			points.Add(new Point(x, y));
+		}
+		MemoryPoints = points;
 	}
 
 	// 前回値を保持するフィールドを用意
@@ -219,8 +296,26 @@ public class PerfMonitorViewModel : IDisposable
 		return cpuUsedMs / (elapsedMs * Environment.ProcessorCount) * 100.0;
 	}
 
-	void OnPropertyChanged(string? name) =>
-		PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+	[PropertyChanged(nameof(FPSPoints))]
+	[SuppressMessage("","IDE0051")]
+	private ValueTask FPSPointsChangedAsync(PointCollection value)
+	{
+		return default;
+	}
+
+	[PropertyChanged(nameof(CpuPoints))]
+	[SuppressMessage("", "IDE0051")]
+	private ValueTask CpuPointsChangedAsync(PointCollection value)
+	{
+		return default;
+	}
+
+	[PropertyChanged(nameof(MemoryPoints))]
+	[SuppressMessage("", "IDE0051")]
+	private ValueTask MemoryPointsChangedAsync(PointCollection value)
+	{
+		return default;
+	}
 
 	protected virtual void Dispose(bool disposing)
 	{
