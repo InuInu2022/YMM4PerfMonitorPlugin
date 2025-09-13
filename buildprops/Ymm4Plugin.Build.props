@@ -98,6 +98,9 @@
       <FilesToDelete Include="$(OutputPath)\publish\Epoxy.dll" />
       <FilesToDelete Include="$(OutputPath)\publish\Epoxy.Core.dll" />
       <FilesToDelete Include="$(OutputPath)\publish\Epoxy.Wpf.dll" />
+      <FilesToDelete Include="$(PackageFolder)\Epoxy.dll" />
+      <FilesToDelete Include="$(PackageFolder)\Epoxy.Core.dll" />
+      <FilesToDelete Include="$(PackageFolder)\Epoxy.Wpf.dll" />
     </ItemGroup>
     <Delete Files="@(FilesToDelete)">
       <Output TaskParameter="DeletedFiles" ItemName="FilesDeleted" />
